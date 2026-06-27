@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shadman | Character Designer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --red: #b74b4b;
+      --red-glow: rgba(183,75,75,0.4);
+      --red-dim: rgba(183,75,75,0.15);
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --bg3: #161616;
+      --white: #f0f0f0;
+      --grey: #aaaaaa;
+      --border: rgba(183,75,75,0.25);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;text-decoration:none;border:none;outline:none;}
+    html{font-size:62.5%;scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;overflow-x:hidden;}
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar{width:5px;}
+    ::-webkit-scrollbar-track{background:var(--bg);}
+    ::-webkit-scrollbar-thumb{background:var(--red);border-radius:3px;}
+
+    /* ── LOADER ── */
+    #loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s;}
+    #loader.hide{opacity:0;pointer-events:none;}
+    .loader-ring{width:60px;height:60px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:1.6rem;}
+    .loader-text{font-family:'Rajdhani',sans-serif;font-size:1.4rem;color:var(--red);letter-spacing:.3rem;text-transform:uppercase;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* ── CURSOR ── */
+    #cursor{position:fixed;width:10px;height:10px;border-radius:50%;background:var(--red);pointer-events:none;transform:translate(-50%,-50%);z-index:9998;transition:transform .1s,opacity .3s;}
+    #cursor-ring{position:fixed;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--red);pointer-events:none;transform:translate(-50%,-50%);z-index:9997;transition:transform .15s,width .2s,height .2s;}
+
+    /* ── HEADER ── */
+    header{position:fixed;top:0;left:0;width:100%;padding:1.8rem 9%;display:flex;justify-content:space-between;align-items:center;z-index:1000;transition:.3s;}
+    header.scrolled{background:rgba(10,10,10,.92);backdrop-filter:blur(10px);box-shadow:0 2px 20px rgba(0,0,0,.5);}
+    .logo{font-family:'Rajdhani',sans-serif;font-size:3.2rem;color:var(--red);font-weight:700;letter-spacing:.2rem;transition:.3s;}
+    .logo:hover{text-shadow:0 0 20px var(--red);}
+    nav{display:flex;gap:3.5rem;align-items:center;}
+    nav a{font-size:1.4rem;color:var(--grey);font-weight:500;letter-spacing:.08rem;text-transform:uppercase;transition:.3s;position:relative;}
+    nav a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--red);transition:.3s;}
+    nav a:hover,nav a.active{color:var(--white);}
+    nav a:hover::after,nav a.active::after{width:100%;}
+    .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;}
+    .hamburger span{width:26px;height:2px;background:var(--white);transition:.3s;display:block;}
+
+    /* ── SECTIONS BASE ── */
+    section{min-height:100vh;padding:10rem 9% 6rem;display:flex;align-items:center;}
+    .section-label{font-family:'Rajdhani',sans-serif;font-size:1.2rem;color:var(--red);letter-spacing:.5rem;text-transform:uppercase;margin-bottom:1rem;}
+    .section-title{font-family:'Rajdhani',sans-serif;font-size:5rem;font-weight:700;color:var(--white);line-height:1.1;margin-bottom:3rem;}
+    .section-title span{color:var(--red);}
+
+    /* ── HOME ── */
+    #home{flex-direction:row;gap:6rem;background:var(--bg);}
+    .home-img-wrap{position:relative;flex-shrink:0;}
+    .home-img-wrap::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(var(--red),transparent,var(--red));animation:rotate 4s linear infinite;z-index:0;}
+    .home-img-wrap::after{content:'';position:absolute;inset:4px;border-radius:50%;background:var(--bg);z-index:1;}
+    .home-img{width:32rem;height:32rem;border-radius:50%;object-fit:cover;object-position:top center;position:relative;z-index:2;display:block;}
+    @keyframes rotate{to{transform:rotate(360deg);}}
+    .home-content{flex:1;max-width:600px;}
+    .home-content h1{font-family:'Rajdhani',sans-serif;font-size:6.5rem;font-weight:700;line-height:1.1;color:var(--white);margin-bottom:.8rem;}
+    .home-content h1 span{color:var(--red);}
+    .typing-wrap{font-family:'Rajdhani',sans-serif;font-size:2.8rem;font-weight:600;color:var(--grey);margin-bottom:2rem;}
+    .typing-wrap .typed-text{color:var(--red);}
+    .typing-wrap .cursor-blink{display:inline-block;width:3px;height:2.8rem;background:var(--red);margin-left:4px;animation:blink .7s infinite;vertical-align:middle;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+    .home-desc{font-size:1.5rem;color:var(--grey);line-height:1.8;margin-bottom:3rem;}
+    .social-icons{display:flex;gap:1.5rem;margin-bottom:3rem;}
+    .social-icons a{width:4.2rem;height:4.2rem;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--grey);transition:.3s;}
+    .social-icons a:hover{color:var(--white);border-color:var(--red);background:var(--red-dim);transform:translateY(-4px);box-shadow:0 8px 20px var(--red-glow);}
+    .btns{display:flex;gap:1.5rem;}
+    .btn{display:inline-block;padding:1.2rem 3rem;border-radius:4rem;font-size:1.5rem;font-weight:600;letter-spacing:.15rem;transition:.3s;cursor:pointer;font-family:'Inter',sans-serif;}
+    .btn-primary{background:var(--red);color:var(--white);border:2px solid var(--red);}
+    .btn-primary:hover{background:transparent;color:var(--red);box-shadow:0 0 25px var(--red-glow);}
+    .btn-outline{background:transparent;color:var(--white);border:2px solid var(--border);}
+    .btn-outline:hover{border-color:var(--red);color:var(--red);}
+
+    /* ── SKILLS ── */
+    #skills{background:var(--bg2);flex-direction:column;align-items:flex-start;}
+    .skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:2rem;width:100%;}
+    .skill-card{background:var(--bg3);border:1px solid var(--border);border-radius:1.2rem;padding:2.5rem;transition:.3s;}
+    .skill-card:hover{border-color:var(--red);transform:translateY(-5px);box-shadow:0 10px 30px var(--red-glow);}
+    .skill-icon{font-size:3.5rem;color:var(--red);margin-bottom:1.5rem;}
+    .skill-name{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:600;margin-bottom:1rem;}
+    .skill-bar-bg{background:rgba(255,255,255,.08);border-radius:2rem;height:6px;overflow:hidden;}
+    .skill-bar{height:100%;background:linear-gradient(90deg,var(--red),#e07070);border-radius:2rem;width:0;transition:width 1.5s ease;}
+    .skill-tools{font-size:1.2rem;color:var(--grey);margin-top:1rem;line-height:1.6;}
+
+    /* ── PROJECTS ── */
+    #projects{background:var(--bg);flex-direction:column;align-items:flex-start;}
+    .projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2.5rem;width:100%;}
+    .project-card{background:var(--bg3);border:1px solid var(--border);border-radius:1.2rem;overflow:hidden;transition:.3s;cursor:pointer;}
+    .project-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,.5);border-color:var(--red);}
+    .project-thumb{width:100%;height:200px;background:linear-gradient(135deg,var(--bg2),var(--bg3));display:flex;align-items:center;justify-content:center;font-size:5rem;color:var(--red);position:relative;overflow:hidden;}
+    .project-thumb::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--red-dim),transparent);}
+    .project-info{padding:2rem;}
+    .project-info h3{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:600;margin-bottom:.8rem;}
+    .project-info p{font-size:1.3rem;color:var(--grey);line-height:1.6;margin-bottom:1.5rem;}
+    .project-tags{display:flex;flex-wrap:wrap;gap:.8rem;}
+    .tag{font-size:1.1rem;padding:.4rem 1rem;border-radius:2rem;background:var(--red-dim);color:var(--red);border:1px solid var(--border);}
+
+    /* ── EDUCATION ── */
+    #education{background:var(--bg2);flex-direction:column;align-items:flex-start;}
+    .timeline{position:relative;padding-left:4rem;width:100%;}
+    .timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--red),transparent);}
+    .timeline-item{position:relative;margin-bottom:4rem;}
+    .timeline-item::before{content:'';position:absolute;left:-3.2rem;top:.6rem;width:14px;height:14px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red);}
+    .timeline-year{font-size:1.2rem;color:var(--red);font-weight:600;letter-spacing:.2rem;margin-bottom:.5rem;}
+    .timeline-title{font-family:'Rajdhani',sans-serif;font-size:2.4rem;font-weight:600;margin-bottom:.5rem;}
+    .timeline-sub{font-size:1.4rem;color:var(--grey);margin-bottom:.8rem;}
+    .timeline-desc{font-size:1.3rem;color:var(--grey);line-height:1.7;}
+
+    /* ── ABOUT ── */
+    #about{background:var(--bg);gap:6rem;flex-wrap:wrap;}
+    .about-img-wrap{flex-shrink:0;}
+    .about-img{width:28rem;height:35rem;object-fit:cover;object-position:top center;border-radius:2rem;border:2px solid var(--border);box-shadow:0 0 40px var(--red-glow);}
+    .about-content{flex:1;min-width:280px;}
+    .about-stats{display:flex;gap:3rem;margin-top:3rem;flex-wrap:wrap;}
+    .stat{text-align:center;}
+    .stat-num{font-family:'Rajdhani',sans-serif;font-size:4.5rem;font-weight:700;color:var(--red);line-height:1;}
+    .stat-label{font-size:1.3rem;color:var(--grey);margin-top:.5rem;}
+
+    /* ── CONTACT ── */
+    #contact{background:var(--bg2);flex-direction:column;align-items:flex-start;}
+    .contact-wrap{display:grid;grid-template-columns:1fr 1fr;gap:5rem;width:100%;}
+    .contact-info p{font-size:1.5rem;color:var(--grey);line-height:1.8;margin-bottom:3rem;}
+    .contact-details{display:flex;flex-direction:column;gap:2rem;}
+    .contact-item{display:flex;align-items:center;gap:1.5rem;}
+    .contact-item i{width:4.5rem;height:4.5rem;background:var(--red-dim);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--red);flex-shrink:0;}
+    .contact-item-text span{display:block;font-size:1.2rem;color:var(--grey);}
+    .contact-item-text strong{font-size:1.5rem;}
+    .contact-form{display:flex;flex-direction:column;gap:1.8rem;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+    .form-group{display:flex;flex-direction:column;gap:.8rem;}
+    .form-group label{font-size:1.3rem;color:var(--grey);letter-spacing:.05rem;}
+    .form-group input,.form-group textarea,.form-group select{background:var(--bg3);border:1.5px solid var(--border);border-radius:.8rem;padding:1.3rem 1.6rem;font-size:1.5rem;color:var(--white);font-family:'Inter',sans-serif;transition:.3s;resize:vertical;}
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--red);box-shadow:0 0 15px var(--red-glow);}
+    .form-group textarea{min-height:140px;}
+    .form-group select option{background:var(--bg3);}
+    #send-btn{align-self:flex-start;display:flex;align-items:center;gap:1rem;}
+    .form-success{display:none;text-align:center;padding:2rem;background:var(--red-dim);border:1px solid var(--red);border-radius:1rem;font-size:1.5rem;color:var(--white);}
+
+    /* ── MODAL OVERLAY ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:2000;display:none;align-items:center;justify-content:center;}
+    .modal-overlay.show{display:flex;}
+    .modal-box{background:var(--bg3);border:1px solid var(--border);border-radius:2rem;padding:4rem;max-width:500px;width:90%;position:relative;animation:modalIn .3s ease;}
+    @keyframes modalIn{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+    .modal-close{position:absolute;top:1.5rem;right:2rem;font-size:2.4rem;color:var(--grey);cursor:pointer;transition:.3s;}
+    .modal-close:hover{color:var(--red);}
+    .modal-title{font-family:'Rajdhani',sans-serif;font-size:3rem;font-weight:700;margin-bottom:.5rem;}
+    .modal-sub{font-size:1.4rem;color:var(--grey);margin-bottom:2.5rem;}
+
+    /* ── FOOTER ── */
+    footer{background:var(--bg);border-top:1px solid var(--border);padding:3rem 9%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2rem;}
+    .footer-logo{font-family:'Rajdhani',sans-serif;font-size:2.4rem;color:var(--red);font-weight:700;}
+    .footer-text{font-size:1.3rem;color:var(--grey);}
+    .back-top{width:4rem;height:4rem;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--white);cursor:pointer;transition:.3s;}
+    .back-top:hover{transform:translateY(-5px);box-shadow:0 8px 20px var(--red-glow);}
+
+    /* ── REVEAL ANIMATION ── */
+    .reveal{opacity:0;transform:translateY(40px);transition:opacity .7s,transform .7s;}
+    .reveal.visible{opacity:1;transform:none;}
+
+    /* ── MOBILE NAV ── */
+    @media(max-width:900px){
+      .hamburger{display:flex;}
+      nav{position:fixed;top:0;right:-100%;width:70%;height:100vh;background:rgba(10,10,10,.98);backdrop-filter:blur(20px);flex-direction:column;justify-content:center;padding:4rem;gap:4rem;transition:.4s;border-left:1px solid var(--border);}
+      nav.open{right:0;}
+      nav a{font-size:2rem;}
+      header{padding:1.5rem 5%;}
+    }
+    @media(max-width:768px){
+      #home{flex-direction:column-reverse;gap:4rem;text-align:center;}
+      .home-img{width:24rem;height:24rem;}
+      .home-content h1{font-size:4.5rem;}
+      .btns,.social-icons{justify-content:center;}
+      .contact-wrap{grid-template-columns:1fr;}
+      .form-row{grid-template-columns:1fr;}
+      #about{flex-direction:column;align-items:center;text-align:center;}
+      .about-stats{justify-content:center;}
+      section{padding:10rem 5% 6rem;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Loading Portfolio</div>
+</div>
+
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- HEADER -->
+<header id="header">
+  <a href="#home" class="logo">Shadman</a>
+  <nav id="nav">
+    <a href="#home" class="active">Home</a>
+    <a href="#skills">Skills</a>
+    <a href="#projects">Projects</a>
+    <a href="#education">Education</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <div class="hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+</header>
+
+<!-- ═══ HOME ═══ -->
+<section id="home">
+  <div class="home-img-wrap reveal">
+    <img src="IMG_20200916_195436_658.jpg" alt="Shadman" class="home-img" id="profile-img"/>
+  </div>
+  <div class="home-content reveal">
+    <h1>Hey, I'm <span>Shadman</span></h1>
+    <div class="typing-wrap">I'm a <span class="typed-text"></span><span class="cursor-blink"></span></div>
+    <p class="home-desc">Created high-quality game-ready characters from concept to final implementation. Experienced in sculpting, UV unwrapping, PBR texturing, and real-time engine pipelines using ZBrush, Blender, Substance 3D Painter, and Unreal Engine.</p>
+    <div class="social-icons">
+      <a href="#" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+      <a href="#" title="GitHub"><i class="fa-brands fa-github"></i></a>
+      <a href="#" title="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+      <a href="#" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+    </div>
+    <div class="btns">
+      <a href="#" class="btn btn-primary" id="hire-btn">Hire Me</a>
+      <a href="#projects" class="btn btn-outline">View Work</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SKILLS ═══ -->
+<section id="skills">
+  <div class="section-label reveal">What I Do</div>
+  <h2 class="section-title reveal">My <span>Skills</span></h2>
+  <div class="skills-grid">
+    <div class="skill-card reveal"><div class="skill-icon"><i class="fa-solid fa-cube"></i></div><div class="skill-name">3D Character Modeling</div><div class="skill-bar-bg"><div class="skill-bar" data-width="92"></div></div><div class="skill-tools">ZBrush · Blender · Maya</div></div>
+    <div class="skill-card reveal"><div class="skill-icon"><i class="fa-solid fa-paint-brush"></i></div><div class="skill-name">PBR Texturing</div><div class="skill-bar-bg"><div class="skill-bar" data-width="88"></div></div><div class="skill-tools">Substance 3D Painter · Marmoset</div></div>
+    <div class="skill-card reveal"><div class="skill-icon"><i class="fa-solid fa-shirt"></i></div><div class="skill-name">Clothing & Rigging</div><div class="skill-bar-bg"><div class="skill-bar" data-width="80"></div></div><div class="skill-tools">Marvelous Designer · Maya</div></div>
+    <div class="skill-card reveal"><div class="skill-icon"><i class="fa-solid fa-gamepad"></i></div><div class="skill-name">Game Engine Integration</div><div class="skill-bar-bg"><div class="skill-bar" data-width="85"></div></div><div class="skill-tools">Unreal Engine · Unity</div></div>
+    <div class="skill-card reveal"><div class="skill-icon"><i class="fa-solid fa-film"></i></div><div class="skill-name">VFX & CGI</div><div class="skill-bar-bg"><div class="skill-bar" data-width="75"></div></div><div class="skill-tools">Blender · After Effects</div></div>
+    <div class="skill-card reveal"><div class="skill-icon"><i class="fa-solid fa-pen-nib"></i></div><div class="skill-name">Graphic Design</div><div class="skill-bar-bg"><div class="skill-bar" data-width="78"></div></div><div class="skill-tools">Photoshop · Illustrator</div></div>
+  </div>
+</section>
+
+<!-- ═══ PROJECTS ═══ -->
+<section id="projects">
+  <div class="section-label reveal">My Work</div>
+  <h2 class="section-title reveal">Recent <span>Projects</span></h2>
+  <div class="projects-grid">
+    <div class="project-card reveal"><div class="project-thumb"><i class="fa-solid fa-user-astronaut"></i></div><div class="project-info"><h3>Sci-Fi Soldier</h3><p>Game-ready character with full PBR workflow, LODs, and Unreal Engine integration.</p><div class="project-tags"><span class="tag">ZBrush</span><span class="tag">Substance</span><span class="tag">UE5</span></div></div></div>
+    <div class="project-card reveal"><div class="project-thumb"><i class="fa-solid fa-shirt"></i></div><div class="project-info"><h3>Princess dress</h3><p>High-detail creature design for animated series. Sculpted in ZBrush, rendered in Marmoset.</p><div class="project-tags"><span class="tag">ZBrush</span><span class="tag">Marmoset</span><span class="tag">VFX</span></div></div></div>
+    <div class="project-card reveal"><div class="project-thumb"><i class="fa-solid fa-child"></i></div><div class="project-info"><h3>Villager</h3><p>Realistic human character with cloth sim and motion-ready rig for mobile game.</p><div class="project-tags"><span class="tag">Blender</span><span class="tag">Marvelous</span><span class="tag">Unity</span></div></div></div>
+    <div class="project-card reveal"><div class="project-thumb"><i class="fa-solid fa-car-rear"></i></div><div class="project-info"><h3>Super car</h3><p>Hard-surface mech design with modular parts, breakable geometry, and cinematic shaders.</p><div class="project-tags"><span class="tag">Maya</span><span class="tag">Substance</span><span class="tag">UE5</span></div></div></div>
+    <div class="project-card reveal"><div class="project-thumb"><i class="fa-solid fa-wand-sparkles"></i></div><div class="project-info"><h3>Magic Chamber</h3><p>Fantasy female character with dynamic cloth, hair simulation, and particle VFX.</p><div class="project-tags"><span class="tag">ZBrush</span><span class="tag">Houdini</span><span class="tag">Blender</span></div></div></div>
+    <div class="project-card reveal"><div class="project-thumb"><i class="fa-solid fa-ghost"></i></div><div class="project-info"><h3>Horror Monster</h3><p>Stylised horror creature for indie game. Full rig, morph targets, and texture atlas.</p><div class="project-tags"><span class="tag">Blender</span><span class="tag">Godot</span><span class="tag">CGI</span></div></div></div>
+  </div>
+</section>
+
+<!-- ═══ EDUCATION ═══ -->
+<section id="education">
+  <div class="section-label reveal">My Journey</div>
+  <h2 class="section-title reveal">Education & <span> Skill</span></h2>
+  <div class="timeline">
+    <div class="timeline-item reveal"><div class="timeline-year">2026 - Undergraduate</div><div class="timeline-title">BBO</div><div class="timeline-sub">NPU universtity</div><div class="timeline-desc">JS College.</div></div>
+    <div class="timeline-item reveal"><div class="timeline-year">2020-2022</div><div class="timeline-title">12Th</div><div class="timeline-sub">stream - biology</div><div class="timeline-desc">Elite publice School.</div></div>
+    <div class="timeline-item reveal"><div class="timeline-year">2020</div><div class="timeline-title">10Th</div><div class="timeline-sub">CBSE Board</div><div class="timeline-desc">Bright Land School.</div></div>
+  <h2 class="section-title reveal">Skill</h2>
+    <div class="timeline-item reveal"><div class="timeline-year">2023-2025</div><div class="timeline-title">3D character Artist</div><div class="timeline-sub">Maya Studio</div><div class="timeline-desc">skill all apps like a maya, ZBrush, adobe Photoshop etc</div></div>
+  </div>
+</section>
+
+<!-- ═══ ABOUT ═══ -->
+<section id="about">
+  <div class="about-img-wrap reveal">
+    <img src="IMG_20200916_195436_658.jpg" alt="About Shadman" class="about-img"/>
+  </div>
+  <div class="about-content reveal">
+    <div class="section-label">Get To Know Me</div>
+    <h2 class="section-title">About <span>Me</span></h2>
+    <p style="font-size:1.5rem;color:var(--grey);line-height:1.9;margin-bottom:1.5rem;">I'm Shadman, a passionate 3D Character Designer and CGI Artist based in India. I breathe life into digital characters — from initial concept sketches to fully game-ready, production-quality assets.</p>
+    <p style="font-size:1.5rem;color:var(--grey);line-height:1.9;">I am a passionate and dedicated 3D Character Artist with a strong interest in creating high-quality game-ready characters. I enjoy every stage of the character creation pipeline, from sculpting and clothing to retopology, UV mapping, texturing, and rendering. I continuously improve my skills by studying anatomy, fabric, and hard-surface details while working on personal projects inspired by AAA games. As a fresher, I am eager to learn from experienced artists, adapt to production workflows, and contribute to creating immersive characters for games..</p>
+    <div class="about-stats">
+      <div class="stat"><div class="stat-num" data-target="6">0</div><div class="stat-label">Projects Done</div></div>
+      <div class="stat"><div class="stat-num" data-target="0">0</div><div class="stat-label">Happy Clients</div></div>
+      <div class="stat"><div class="stat-num" data-target="0">0</div><div class="stat-label">Years Exp</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT ═══ -->
+<section id="contact">
+  <div class="section-label reveal">Get In Touch</div>
+  <h2 class="section-title reveal">Contact <span>Me</span></h2>
+  <div class="contact-wrap">
+    <div class="contact-info reveal">
+      <p>Have a project in mind or want to collaborate? I'd love to hear from you. Fill out the form and I'll get back to you within 24 hours.</p>
+      <div class="contact-details">
+        <div class="contact-item"><i class="fa-solid fa-envelope"></i><div class="contact-item-text"><span>Email</span><strong>shadmanali0911@gmail.com</strong></div></div>
+        <div class="contact-item"><i class="fa-solid fa-location-dot"></i><div class="contact-item-text"><span>Location</span><strong>New Delhi India</strong></div></div>
+         <div class="contact-item"><i class="fa-solid fa-phone"></i><div class="contact-item-text"><span>Phone</span><strong>9905072647</strong></div></div>
+        <div class="contact-item"><i class="fa-brands fa-instagram"></i><div class="contact-item-text"><span>Instagram</span><strong>@shadman.art</strong></div></div>
+      </div>
+    </div>
+    <form class="contact-form reveal" id="contactForm">
+      <div class="form-row">
+        <div class="form-group"><label>Your Name</label><input type="text" placeholder="Shadman Khan" required id="f-name"/></div>
+        <div class="form-group"><label>Your Email</label><input type="email" placeholder="you@email.com" required id="f-email"/></div>
+      </div>
+      <div class="form-group"><label>Project Type</label>
+        <select id="f-type">
+          <option value="">Select project type</option>
+          <option>Game Character</option>
+          <option>Creature Design</option>
+          <option>VFX / CGI</option>
+          <option>Graphic Design</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Message</label><textarea placeholder="Tell me about your project..." required id="f-msg"></textarea></div>
+      <button type="submit" class="btn btn-primary" id="send-btn"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
+      <div class="form-success" id="form-success">✅ Message sent! I'll reply within 24 hours.</div>
+    </form>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">Shadman</div>
+  <div class="footer-text">© 2024 Shadman. All rights reserved.</div>
+  <div class="back-top" id="backTop" title="Back to top"><i class="fa-solid fa-arrow-up"></i></div>
+</footer>
+
+<!-- HIRE ME MODAL -->
+<div class="modal-overlay" id="hireModal">
+  <div class="modal-box">
+    <span class="modal-close" id="modalClose">×</span>
+    <h2 class="modal-title">Hire <span style="color:var(--red)">Shadman</span></h2>
+    <p class="modal-sub">Quick hire request — I'll respond within 24 hours!</p>
+    <form class="contact-form" id="hireForm">
+      <div class="form-group"><label>Your Name</label><input type="text" placeholder="Your full name" required id="h-name"/></div>
+      <div class="form-group"><label>Email</label><input type="email" placeholder="your@email.com" required id="h-email"/></div>
+      <div class="form-group"><label>Project Brief</label><textarea placeholder="Describe your project in a few lines..." required id="h-msg" style="min-height:100px;"></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.8rem;"><i class="fa-solid fa-envelope"></i> Send Hire Request</button>
+      <div class="form-success" id="hire-success">✅ Request sent to Shadman's inbox!</div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ── LOADER ──
+window.addEventListener('load',()=>{
+  setTimeout(()=>document.getElementById('loader').classList.add('hide'),800);
+});
+
+// ── CUSTOM CURSOR ──
+const cur=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+document.addEventListener('mousemove',e=>{
+  cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';
+  setTimeout(()=>{ring.style.left=e.clientX+'px';ring.style.top=e.clientY+'px';},80);
+});
+document.querySelectorAll('a,button,.project-card,.skill-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ring.style.width='52px';ring.style.height='52px';});
+  el.addEventListener('mouseleave',()=>{ring.style.width='34px';ring.style.height='34px';});
+});
+
+// ── HAMBURGER ──
+const ham=document.getElementById('hamburger'),nav=document.getElementById('nav');
+ham.addEventListener('click',()=>{nav.classList.toggle('open');});
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>nav.classList.remove('open')));
+
+// ── HEADER SCROLL ──
+window.addEventListener('scroll',()=>{
+  document.getElementById('header').classList.toggle('scrolled',scrollY>50);
+  document.getElementById('backTop').style.opacity=scrollY>400?'1':'0';
+});
+
+// ── ACTIVE NAV ON SCROLL ──
+const sections=document.querySelectorAll('section');
+const navLinks=document.querySelectorAll('nav a');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      navLinks.forEach(a=>{a.classList.remove('active');if(a.getAttribute('href')==='#'+e.target.id)a.classList.add('active');});
+    }
+  });
+},{threshold:.4});
+sections.forEach(s=>observer.observe(s));
+
+// ── REVEAL ON SCROLL ──
+const revealObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');}});
+},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>{revealObs.observe(el);el.style.transitionDelay=(Math.random()*.15)+'s';});
+
+// ── SKILL BARS ──
+const barObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.skill-bar').forEach(b=>{b.style.width=b.dataset.width+'%';});}});
+},{threshold:.3});
+document.querySelectorAll('#skills').forEach(s=>barObs.observe(s));
+
+// ── COUNTER ANIMATION ──
+function animateCount(el,target){
+  let cur=0;const step=Math.ceil(target/40);
+  const t=setInterval(()=>{cur=Math.min(cur+step,target);el.textContent=cur+(target>10?'+':'');if(cur>=target)clearInterval(t);},40);
+}
+const countObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){
+    e.target.querySelectorAll('.stat-num').forEach(el=>animateCount(el,+el.dataset.target));
+    countObs.unobserve(e.target);
+  }});
+},{threshold:.5});
+document.querySelectorAll('#about').forEach(s=>countObs.observe(s));
+
+// ── TYPING EFFECT ──
+const words=['Character Designer','3D Artist','CGI Creator','VFX Designer','Youtuber'];
+let wi=0,ci=0,del=false;
+const typedEl=document.querySelector('.typed-text');
+function type(){
+  const w=words[wi];
+  typedEl.textContent=del?w.slice(0,ci--):w.slice(0,ci++);
+  if(!del&&ci>w.length){setTimeout(()=>{del=true;},1200);return setTimeout(type,100);}
+  if(del&&ci<0){del=false;wi=(wi+1)%words.length;}
+  setTimeout(type,del?60:110);
+}
+type();
+
+// ── BACK TO TOP ──
+document.getElementById('backTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+// ── HIRE ME MODAL ──
+document.getElementById('hire-btn').addEventListener('click',e=>{e.preventDefault();document.getElementById('hireModal').classList.add('show');});
+document.getElementById('modalClose').addEventListener('click',()=>document.getElementById('hireModal').classList.remove('show'));
+document.getElementById('hireModal').addEventListener('click',e=>{if(e.target===document.getElementById('hireModal'))e.target.classList.remove('show');});
+
+// ── HIRE FORM SUBMIT (sends to mailto) ──
+document.getElementById('hireForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=document.getElementById('h-name').value;
+  const email=document.getElementById('h-email').value;
+  const msg=document.getElementById('h-msg').value;
+  const body=`Name: ${name}%0AEmail: ${email}%0A%0AProject:%0A${encodeURIComponent(msg)}`;
+  window.open(`mailto:shadman@email.com?subject=Hire Request from ${name}&body=${body}`);
+  document.getElementById('hire-success').style.display='block';
+  document.getElementById('hireForm').reset();
+  setTimeout(()=>{document.getElementById('hire-success').style.display='none';document.getElementById('hireModal').classList.remove('show');},3000);
+});
+
+// ── CONTACT FORM SUBMIT ──
+document.getElementById('contactForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=document.getElementById('f-name').value;
+  const email=document.getElementById('f-email').value;
+  const type=document.getElementById('f-type').value;
+  const msg=document.getElementById('f-msg').value;
+  const body=`Name: ${name}%0AEmail: ${email}%0AType: ${type}%0A%0AMessage:%0A${encodeURIComponent(msg)}`;
+  window.open(`mailto:shadman@email.com?subject=Portfolio Contact: ${type||'Inquiry'}&body=${body}`);
+  document.getElementById('form-success').style.display='block';
+  document.getElementById('contactForm').reset();
+  setTimeout(()=>document.getElementById('form-success').style.display='none',4000);
+});
+
+// ── PARTICLE DOTS BG (subtle) ──
+(function(){
+  const canvas=document.createElement('canvas');
+  canvas.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1;opacity:.18;';
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<80;i++)pts.push({x:Math.random()*9999,y:Math.random()*9999,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3});
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x=(p.x+p.vx+W)%W;p.y=(p.y+p.vy+H)%H;
+      ctx.beginPath();ctx.arc(p.x,p.y,1.5,0,6.28);ctx.fillStyle='#b74b4b';ctx.fill();
+    });
+    pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
+      const d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<120){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(183,75,75,${1-d/120})`;ctx.lineWidth=.5;ctx.stroke();}
+    }));
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
